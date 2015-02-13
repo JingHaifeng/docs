@@ -1,7 +1,7 @@
 [Grumoon](https://github.com/grumoon) 的 2014 -> 2015
 -------------
 ### 一. 2014 总结
-2014 总体 xxxx
+2014 总体 
 
 #### 成果
 1. xxx  
