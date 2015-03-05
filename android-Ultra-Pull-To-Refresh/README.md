@@ -12,11 +12,31 @@ android-Ultra-Pull-To-Refresh 源码解析
 (2).简洁完善的 Header 抽象，方便进行拓展，构建符合需求的头部。
 > 对比 [Android-PullToRefresh](https://github.com/chrisbanes/Android-PullToRefresh) 项目，UltraPTR 没有实现 **加载更多** 的功能，但我认为 **下拉刷新** 和 **加载更多** 不是同一层次的功能， **下拉刷新** 有更广泛的需求，可以适用于任何页面。而 **加载更多** 的功能应该交由具体的 Content 自己去实现。这应该是和Google官方推出 SwipeRefreshLayout 是相同的设计思路，但对比 SwipeRefreshLayout，UltraPTR 更灵活，更容易拓展。
 
+###2. 总体设计
+UltraPTR 总体设计比较简单明了。  
+首先抽象出了两个接口。  
+PtrHandler 下拉刷新的功能接口。包罗刷新回调和能否刷新的函数。  
+PtrUIHandler 下拉刷新的UI接口。代表了下拉刷新的UI的回调。包括准备下拉，下拉中，下拉完成以及下拉过程中的位置回调等方法。    
+整个项目围绕核心类 PtrFrameLayout 。  
+PtrFrameLayout 继承自 ViewGroup ，有且只能有两个子 View ，头部 Header 和内容 Content 。通常情况是 Header 会实现 PtrUIHandler 接口，Content 可以为任何 View 的子类。  
+PtrFrameLayout 实现了一套完整的自定义控件。通过重写 onFinishInflate ， onMeasure ， onLayout 来确定控件显示，通过重写 dispatchTouchEvent 来确定控件的行为。
 
-###2. 详细设计
-###2.1 核心类功能介绍
+###3. 流程图
+主要功能流程图  
+- 如 Retrofit、Volley 的请求处理流程，Android-Universal-Image-Loader 的图片处理流程图  
+- 可使用 StartUML、Visio 或 Google Drawing 等工具完成，其他工具推荐？？  
+- 非所有项目必须，不需要的请先在群里反馈  
 
-####2.1.1 PtrHandler.java
+**完成时间**  
+- `两天内`完成  
+
+
+
+
+###4. 详细设计
+###4.1 核心类功能介绍
+
+####4.1.1 PtrHandler.java
 下拉刷新功能接口，对下拉刷新功能的抽象。  
 ```java
 public void onRefreshBegin(final PtrFrameLayout frame)
@@ -31,7 +51,7 @@ public boolean checkCanDoRefresh(final PtrFrameLayout frame, final View content,
 如果 Content 是 ListView ，则第一条在顶部时返回 true，表示可以下拉刷新。  
 如果 Content 是 ScrollView ，则滑动到顶部时返回 true ，表示可以刷新。  
 
-####2.1.2 PtrDefaultHandler.java
+####4.1.2 PtrDefaultHandler.java
 抽象类，实现了 PtrHandler.java 接口，给出了 `checkCanDoRefresh` 默认实现。  
 ```java
 @Override
@@ -108,71 +128,56 @@ if (viewGroup instanceof ScrollView || viewGroup instanceof AbsListView) {
 }
 ```
 如果 Content 是AbsListView（ListView，GridView），通过getScrollY（）获取的值一直是0，所以这段代码的判断，无效。
-####2.1.3 PtrUIHandler.java
+####4.1.3 PtrUIHandler.java
 下拉刷新，UI事件接口
-####2.1.4 PtrUIHandlerHolder.java
+####4.1.4 PtrUIHandlerHolder.java
 封装了PtrUIHandler.java的链表
-####2.1.5 PtrFrameLayout.java
+####4.1.5 PtrFrameLayout.java
 下拉刷新实现类
-####2.1.6 PtrClassicFrameLayout.java
+####4.1.6 PtrClassicFrameLayout.java
 继承PtrFrameLayout.java，经典下拉刷新实现类
-####2.1.7 PtrClassicDefaultHeader.java
+![default-header](image/default-header.gif)  
+####4.1.7 PtrClassicDefaultHeader.java
 经典下拉刷新实现类的头部实现
-####2.1.8 PtrUIHandlerHook.java
-####2.1.9 MaterialHeader.java
-Material Design风格的头部实现
-####2.1.10 MaterialProgressDrawable.java
-####2.1.11 StoreHouseHeader.java
-StoreHouse风格的头部实现
-####2.1.12 StoreHouseBarItem.java
-####2.1.13 StoreHousePath.java
-####2.1.14 PtrLocalDisplay.java
+####4.1.8 PtrUIHandlerHook.java
+####4.1.9 MaterialHeader.java
+Material Design风格的头部实现  
+![material-design-header](image/material-design-header.gif)
+####4.1.10 MaterialProgressDrawable.java
+####4.1.11 StoreHouseHeader.java
+StoreHouse风格的头部实现  
+![store-house-header](image/store-house-header.gif)
+####4.1.12 StoreHouseBarItem.java
+####4.1.13 StoreHousePath.java
+####4.1.14 PtrLocalDisplay.java
 显示相关工具类  
-
- 
-
   
-###2.2 类关系图
-类关系图，类的继承、组合关系图，可是用 StartUML 工具。  
+###4.2 类关系图
+![UltraPTR类关系图](image/UltraPTR-class.png)
 
-**完成时间**  
-- 根据项目大小而定，目前简单根据项目 Java 文件数判断，完成时间大致为：`文件数 * 7 / 10`天，特殊项目具体对待  
-
-###3. 流程图
-主要功能流程图  
-- 如 Retrofit、Volley 的请求处理流程，Android-Universal-Image-Loader 的图片处理流程图  
-- 可使用 StartUML、Visio 或 Google Drawing 等工具完成，其他工具推荐？？  
-- 非所有项目必须，不需要的请先在群里反馈  
-
-**完成时间**  
-- `两天内`完成  
-
-###4. 总体设计
-整个库分为哪些模块及模块之间的调用关系。  
-- 如大多数图片缓存会分为 Loader 和 Processer 等模块。  
-- 可使用 StartUML、Visio 或 Google Drawing 等工具完成，其他工具推荐？？  
-- 非所有项目必须，不需要的请先在群里反馈。  
-
-**完成时间**  
-- `两天内`完成  
 
 ###5. 杂谈
-该项目存在的问题、可优化点及类似功能项目对比等，非所有项目必须。  
+####5.1优点
+刷微博，刷朋友圈，已经成为很多人的习惯，现在的应用，几乎所有的用户主动刷新操作，都是通过下拉刷新来完成。  
+所以一个精心设计的下拉刷新头部，可以让你的应用眼前一亮。UltraPTR对头部的抽象，可以是用户随意定制自己的头部，来实现各种效果。  
+  
+####5.2期望
+![default-header](image/default-header.gif)  
+希望增加更加灵活的行为，可以应对诸如这样的需求。总结起来，就是更加抽象Header和Content在针对下拉时候的行为。
+例如  
+知乎  
+![zhihu-header](image/zhihu-header.gif)  
+Evernote  
+![evernote-header](image/evernote-header.gif)    
+####5.3关于加载更多
+UltraPTR 没有集成加载更多的功能。项目的 Issue 里面也有人提到希望加入这个功能。  
+[希望加入下拉加载········ #35](https://github.com/liaohuqiu/android-Ultra-Pull-To-Refresh/issues/35)  
+[要是把上拉加载更多 集成进去，就无敌了 #8](https://github.com/liaohuqiu/android-Ultra-Pull-To-Refresh/issues/8)  
+作者给予了回复，认为下拉刷新和加载更多，不能同一个层级的功能。加载更多不应该由 UltraPTR 去实现，而应该有 Content 自己去实现。  
+我也觉得这样是合适的，UltraPTR 的强大之处，就是它的 Content 可以是任何的 View 。因为刷新的动作，可以在任何的 View 上进行，比如一个 TextView ，一个 ImageView ，一个 WebView 或者一个 LineaerLayout 布局中。而加载更多的功能，很多时候是用在了例如 ListView，GridView等上面，而大部分的 View 不会需要这个功能。所以交由 ListView或者GridView自己去实现比较好些。   
 
-**完成时间**  
-- `两天内`完成  
 
-###6. 修改完善  
-在完成了上面 5 个部分后，移动模块顺序，将  
-`2. 详细设计` -> `2.1 核心类功能介绍` -> `2.2 类关系图` -> `3. 流程图` -> `4. 总体设计`  
-顺序变为  
-`2. 总体设计` -> `3. 流程图` -> `4. 详细设计` -> `4.1 类关系图` -> `4.2 核心类功能介绍`  
-并自行校验优化一遍，确认无误后，让`校对 Buddy`进行校对，`校对 Buddy`校对完成后将  
-`校对状态：未完成`  
-变为：  
-`校对状态：已完成`  
 
-**完成时间**  
-- `两天内`完成  
 
-**到此便大功告成，恭喜大家^_^**  
+  
+
