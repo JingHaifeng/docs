@@ -13,13 +13,13 @@ android-Ultra-Pull-To-Refresh 源码解析
 > 对比 [Android-PullToRefresh](https://github.com/chrisbanes/Android-PullToRefresh) 项目，UltraPTR 没有实现 **加载更多** 的功能，但我认为 **下拉刷新** 和 **加载更多** 不是同一层次的功能， **下拉刷新** 有更广泛的需求，可以适用于任何页面。而 **加载更多** 的功能应该交由具体的 Content 自己去实现。这应该是和Google官方推出 SwipeRefreshLayout 是相同的设计思路，但对比 SwipeRefreshLayout，UltraPTR 更灵活，更容易拓展。
 
 ###2. 总体设计
-UltraPTR 总体设计比较简单明了。  
-首先抽象出了两个接口。  
-PtrHandler 下拉刷新的功能接口。包罗刷新回调和能否刷新的函数。  
-PtrUIHandler 下拉刷新的UI接口。代表了下拉刷新的UI的回调。包括准备下拉，下拉中，下拉完成以及下拉过程中的位置回调等方法。    
-整个项目围绕核心类 PtrFrameLayout 。  
-PtrFrameLayout 继承自 ViewGroup ，有且只能有两个子 View ，头部 Header 和内容 Content 。通常情况是 Header 会实现 PtrUIHandler 接口，Content 可以为任何 View 的子类。  
-PtrFrameLayout 实现了一套完整的自定义控件。通过重写 onFinishInflate ， onMeasure ， onLayout 来确定控件显示，通过重写 dispatchTouchEvent 来确定控件的行为。
+UltraPTR 总体设计比较简单清晰。  
+首先抽象出了两个接口，功能接口和 UI 接口。  
+PtrHandler 代表下拉刷新的功能接口，包含刷新功能回调方法以及判断是否可下拉的方法。用户实现此接口来进行数据刷新工作。   
+PtrUIHandler 代表下拉刷新的 UI 接口，包含准备下拉，下拉中，下拉完成，重置以及下拉过程中的位置变化等回调方法。通常情况下， Header 需要实现此接口，来处理下拉刷新过程中的头部 UI 的变化。        
+整个项目围绕核心类 PtrFrameLayout 。 PtrFrameLayout 代表了一个下拉刷新的自定义控件。    
+PtrFrameLayout 继承自 ViewGroup ，有且只能有两个子 View ，头部 Header 和内容 Content 。通常情况是 Header 会实现 PtrUIHandler 接口，Content 可以为任意的 View 。  
+和所有的自定义控件一样， UltraPTR 通过重写 onFinishInflate ， onMeasure ， onLayout 来确定控件大小和位置。通过重写 dispatchTouchEvent 来确定控件的下拉行为。
 
 ###3. 流程图
 主要功能流程图  
