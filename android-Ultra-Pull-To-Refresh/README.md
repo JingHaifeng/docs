@@ -37,22 +37,22 @@ PtrFrameLayout 继承自 ViewGroup ，有且只能有两个子 View ，头部 He
 ###4.1 核心类功能介绍
 
 ####4.1.1 PtrHandler.java
-下拉刷新功能接口，对下拉刷新功能的抽象。  
+下拉刷新功能接口，对下拉刷新功能的抽象，包含以下两个方法。  
 ```java
 public void onRefreshBegin(final PtrFrameLayout frame)
 ```  
-刷新回调函数，用户在这里写自己的刷新功能实现。  
+刷新回调函数，用户在这里写自己的刷新功能实现，处理业务数据的刷新。  
 
 ```java
 public boolean checkCanDoRefresh(final PtrFrameLayout frame, final View content, final View header)
 ```
-判断是否可以下拉刷新。UltraPTR 的 Content 可以包含任何内容，用户在这里判断决定是否可以下拉。  
-例如，如果 Content 是 TextView ，则可以直接返回 true，表示可以下拉刷新。  
-如果 Content 是 ListView ，则第一条在顶部时返回 true，表示可以下拉刷新。  
-如果 Content 是 ScrollView ，则滑动到顶部时返回 true ，表示可以刷新。  
+判断是否可以下拉刷新。 UltraPTR 的 Content 可以包含任何内容，用户在这里判断决定是否可以下拉。  
+例如，如果 Content 是 TextView ，则可以直接返回 true ，表示可以下拉刷新。  
+如果 Content 是 ListView ，当第一条在顶部时返回 true ，表示可以下拉刷新。  
+如果 Content 是 ScrollView ，当滑动到顶部时返回 true ，表示可以刷新。  
 
 ####4.1.2 PtrDefaultHandler.java
-抽象类，实现了 PtrHandler.java 接口，给出了 `checkCanDoRefresh` 默认实现。  
+抽象类，实现了 PtrHandler.java 接口，给出了 `checkCanDoRefresh` 默认实现。给出了常见 View 的判断方法。  
 ```java
 @Override
 public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
@@ -129,28 +129,47 @@ if (viewGroup instanceof ScrollView || viewGroup instanceof AbsListView) {
 ```
 如果 Content 是AbsListView（ListView，GridView），通过getScrollY（）获取的值一直是0，所以这段代码的判断，无效。
 ####4.1.3 PtrUIHandler.java
-下拉刷新，UI事件接口
+下拉刷新 UI 接口，对下拉刷新 UI 变化的抽象。一般情况下， Header 会实现此接口，处理下拉过程中的头部 UI 的变化。  
+包含以下5个方法。  
+```java
+public void onUIReset(PtrFrameLayout frame);
+```
+Content 重新回到顶部， Header 消失，整个下拉刷新过程完全结束以后，重置 View 。
+```java
+public void onUIRefreshPrepare(PtrFrameLayout frame);
+```
+准备刷新，Header 将要出现时调用。
+```java
+public void onUIRefreshBegin(PtrFrameLayout frame);
+```
+开始刷新，Header 进入刷新状态之前调用。
+```java
+public void onUIRefreshComplete(PtrFrameLayout frame);
+```
+刷新结束，Header 开始向上移动之前调用。
+```java
+public void onUIPositionChange(PtrFrameLayout frame, boolean isUnderTouch, byte status, int oldPosition, int currentPosition, float oldPercent, float currentPercent);
+```
+下拉过程中位置变化回调。
 ####4.1.4 PtrUIHandlerHolder.java
-封装了PtrUIHandler.java的链表
+实现 UI 接口 PtrUIHandler ，封装了 PtrUIHandler ，并将其组织成链表的形式。
 ####4.1.5 PtrFrameLayout.java
 下拉刷新实现类
-####4.1.6 PtrClassicFrameLayout.java
-继承PtrFrameLayout.java，经典下拉刷新实现类
+####4.1.6 PtrClassicDefaultHeader.java
+经典下拉刷新的头部实现  
 ![default-header](image/default-header.gif)  
-####4.1.7 PtrClassicDefaultHeader.java
-经典下拉刷新实现类的头部实现
+####4.1.7 PtrClassicFrameLayout.java
+继承PtrFrameLayout.java，经典下拉刷新实现类。  
+添加了 PtrClassicDefaultHeader 作为头部，用户使用时只需要设置 Content 即可。
 ####4.1.8 PtrUIHandlerHook.java
 ####4.1.9 MaterialHeader.java
 Material Design风格的头部实现  
 ![material-design-header](image/material-design-header.gif)
-####4.1.10 MaterialProgressDrawable.java
-####4.1.11 StoreHouseHeader.java
+####4.1.10 StoreHouseHeader.java
 StoreHouse风格的头部实现  
 ![store-house-header](image/store-house-header.gif)
-####4.1.12 StoreHouseBarItem.java
-####4.1.13 StoreHousePath.java
-####4.1.14 PtrLocalDisplay.java
-显示相关工具类  
+####4.1.11 PtrLocalDisplay.java
+显示相关工具类，用于获取用户设备屏幕宽度（像素，DP），高度（像素，DP）以及屏幕密度。 同时提供了dp和px的转化方法。
   
 ###4.2 类关系图
 ![UltraPTR类关系图](image/UltraPTR-class.png)
