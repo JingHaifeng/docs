@@ -49,7 +49,6 @@ public boolean checkCanDoRefresh(final PtrFrameLayout frame, final View content,
 public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
 	return checkContentCanBePulledDown(frame, content, header);
 }
-
 public static boolean checkContentCanBePulledDown(PtrFrameLayout frame, View content, View header) {
     /**
      * 如果Content不是ViewGroup，返回true,表示可以下拉</br>
@@ -58,7 +57,7 @@ public static boolean checkContentCanBePulledDown(PtrFrameLayout frame, View con
     if (!(content instanceof ViewGroup)) {
         return true;
     }
-
+    
     ViewGroup viewGroup = (ViewGroup) content;
 
     /**
@@ -110,7 +109,6 @@ public static boolean checkContentCanBePulledDown(PtrFrameLayout frame, View con
         return top == viewGroup.getPaddingTop();
     }
 }
-
 ```
 这里特别注意一下，以上代码中存在一些小bug。[Issue](https://github.com/liaohuqiu/android-Ultra-Pull-To-Refresh/issues/30)
 ```java
@@ -118,7 +116,8 @@ if (viewGroup instanceof ScrollView || viewGroup instanceof AbsListView) {
     return viewGroup.getScrollY() == 0;
 }
 ```
-如果 Content 是AbsListView（ListView，GridView），通过getScrollY（）获取的值一直是0，所以这段代码的判断，无效。
+如果 Content 是AbsListView（ListView，GridView），通过getScrollY（）获取的值一直是0，所以这段代码的判断，无效。  
+
 ####4.1.3 PtrUIHandler.java
 下拉刷新 UI 接口，对下拉刷新 UI 变化的抽象。一般情况下， Header 会实现此接口，处理下拉过程中的头部 UI 的变化。  
 包含以下5个方法。  
@@ -161,150 +160,38 @@ UltraPTR 的核心类，自定义控件类。
 参考技术点，[公共技术点之 View 绘制流程](http://codekk.com/open-source-project-analysis/detail/Android/lightSky/%E5%85%AC%E5%85%B1%E6%8A%80%E6%9C%AF%E7%82%B9%E4%B9%8BView%20%E7%BB%98%E5%88%B6%E6%B5%81%E7%A8%8B)  
 ```java
 @Override
-protected void onFinishInflate() {
-    final int childCount = getChildCount();
-    if (childCount > 2) {
-        throw new IllegalStateException("PtrFrameLayout only can host 2 elements");
-    } else if (childCount == 2) {
-        if (mHeaderId != 0 && mHeaderView == null) {
-            mHeaderView = findViewById(mHeaderId);
-        }
-        if (mContainerId != 0 && mContent == null) {
-            mContent = findViewById(mContainerId);
-        }
-
-        // not specify header or content
-        if (mContent == null || mHeaderView == null) {
-
-            View child1 = getChildAt(0);
-            View child2 = getChildAt(1);
-            if (child1 instanceof PtrUIHandler) {
-                mHeaderView = child1;
-                mContent = child2;
-            } else if (child2 instanceof PtrUIHandler) {
-                mHeaderView = child2;
-                mContent = child1;
-            } else {
-                // both are not specified
-                if (mContent == null && mHeaderView == null) {
-                    mHeaderView = child1;
-                    mContent = child2;
-                }
-                // only one is specified
-                else {
-                    if (mHeaderView == null) {
-                        mHeaderView = mContent == child1 ? child2 : child1;
-                    } else {
-                        mContent = mHeaderView == child1 ? child2 : child1;
-                    }
-                }
-            }
-        }
-    } else if (childCount == 1) {
-        mContent = getChildAt(0);
-    } else {
-        TextView errorView = new TextView(getContext());
-        errorView.setClickable(true);
-        errorView.setTextColor(0xffff6600);
-        errorView.setGravity(Gravity.CENTER);
-        errorView.setTextSize(20);
-        errorView.setText("The content view in PtrFrameLayout is empty. Do you forget to specify its id in xml layout file?");
-        mContent = errorView;
-        addView(mContent);
-    }
-    super.onFinishInflate();
-}
+protected void onFinishInflate() {...}
 ```
-UltraPTR 有且只有两个子 View ，onFinishInflate 方法用来来确定 Header 和 Content 。 
-可以通过 `setHeaderView` 设置 Header ，或者通过 `ptr_header` 和 `ptr_content ` 来设置。  
+UltraPTR 有且只有两个子 View ，重写 onFinishInflate 方法来确定 Header 和 Content 。  
+可以通过 `setHeaderView` 在代码中设置 Header ，或者通过 `ptr_header` 和 `ptr_content ` 两个自定义属性来设置。也可以直接在布局文件中，为 PtrFrameLayout 加入两个子 View ，然后在 onFinishInflate 进行判断赋值。  
 通常情况下， Header 会实现 PtrUIHandler 接口。  
-最终，将 Header 实例赋值给 mHeaderView ，Content 实例赋值给 mContent 。  
-
+最终，将 Header 实例赋值给 mHeaderView 变量，Content 实例赋值给 mContent 变量。  
 
 ```java
 @Override
 protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
-    if (DEBUG && DEBUG_LAYOUT) {
-        CLog.d(LOG_TAG, "onMeasure frame: width: %s, height: %s, padding: %s %s %s %s",
-                getMeasuredHeight(), getMeasuredWidth(),
-                getPaddingLeft(), getPaddingRight(), getPaddingTop(), getPaddingBottom());
-
-    }
-
+    ...
+    // 测量 Header
     if (mHeaderView != null) {
         measureChildWithMargins(mHeaderView, widthMeasureSpec, 0, heightMeasureSpec, 0);
         MarginLayoutParams lp = (MarginLayoutParams) mHeaderView.getLayoutParams();
         mHeaderHeight = mHeaderView.getMeasuredHeight() + lp.topMargin + lp.bottomMargin;
         mOffsetToRefresh = (int) (mHeaderHeight * mRatioOfHeaderHeightToRefresh);
-        if (DEBUG && DEBUG_LAYOUT) {
-            CLog.d(LOG_TAG, "onMeasure header: height: %s, topMargin: %s, bottomMargin: %s, headerHeight: %s",
-                    mHeaderView.getMeasuredHeight(), lp.leftMargin, lp.rightMargin, mHeaderHeight);
-        }
+        ...
     }
-
+	// 测量 Content 
     if (mContent != null) {
         measureContentView(mContent, widthMeasureSpec, heightMeasureSpec);
-        if (DEBUG && DEBUG_LAYOUT) {
-            ViewGroup.MarginLayoutParams lp = (MarginLayoutParams) mContent.getLayoutParams();
-            CLog.d(LOG_TAG, "onMeasure content, width: %s, height: %s, margin: %s %s %s %s",
-                    getMeasuredWidth(), getMeasuredHeight(),
-                    lp.leftMargin, lp.topMargin, lp.rightMargin, lp.bottomMargin);
-            CLog.d(LOG_TAG, "onMeasure, mCurrentPos: %s, mLastPos: %s, top: %s",
-                    mCurrentPos, mLastPos, mContent.getTop());
-        }
+        ...
     }
 }
 
-private void measureContentView(View child,
-                                int parentWidthMeasureSpec,
-                                int parentHeightMeasureSpec) {
-    final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
-
-    final int childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec,
-            getPaddingLeft() + getPaddingRight() + lp.leftMargin + lp.rightMargin, lp.width);
-    final int childHeightMeasureSpec = getChildMeasureSpec(parentHeightMeasureSpec,
-            getPaddingTop() + getPaddingBottom() + lp.topMargin, lp.height);
-
-    child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
-}
 ```
-重写 onMeasure ，主要是测量出 Header 的高度，将其赋值给 mHeaderHeight 。
+重写 onMeasure ，测量 Header 和 Content ，将 Header 的高度赋值给 `mHeaderHeight` 变量，将计算出的下拉刷新偏移量赋值给 `mOffsetToRefresh `变量。
 ```java
 @Override
-protected void onLayout(boolean flag, int i, int j, int k, int l) {
-    layoutChildren();
-}
-
-private void layoutChildren() {
-    int offsetX = mCurrentPos;
-    int paddingLeft = getPaddingLeft();
-    int paddingTop = getPaddingTop();
-
-    if (mHeaderView != null) {
-        MarginLayoutParams lp = (MarginLayoutParams) mHeaderView.getLayoutParams();
-        final int left = paddingLeft + lp.leftMargin;
-        final int top = paddingTop + lp.topMargin + offsetX - mHeaderHeight;
-        final int right = left + mHeaderView.getMeasuredWidth();
-        final int bottom = top + mHeaderView.getMeasuredHeight();
-        mHeaderView.layout(left, top, right, bottom);
-        if (DEBUG && DEBUG_LAYOUT) {
-            CLog.d(LOG_TAG, "onLayout header: %s %s %s %s", left, top, right, bottom);
-        }
-    }
-    if (mContent != null) {
-        MarginLayoutParams lp = (MarginLayoutParams) mContent.getLayoutParams();
-        final int left = paddingLeft + lp.leftMargin;
-        final int top = paddingTop + lp.topMargin + offsetX;
-        final int right = left + mContent.getMeasuredWidth();
-        final int bottom = top + mContent.getMeasuredHeight();
-        if (DEBUG && DEBUG_LAYOUT) {
-            CLog.d(LOG_TAG, "onLayout content: %s %s %s %s", left, top, right, bottom);
-        }
-        mContent.layout(left, top, right, bottom);
-    }
-}
+protected void onLayout(boolean flag, int i, int j, int k, int l) {...}
 ```
 PtrFrameLayout 继承 ViewGroup ，继承 ViewGroup 必须重写 onLayout 方法来确定子 View 的位置。  
 PtrFrameLayout 只有两个子 View 。  
@@ -316,8 +203,8 @@ final int top = paddingTop + lp.topMargin + offsetX - mHeaderHeight;
 ```java
 final int top = paddingTop + lp.topMargin + offsetX;
 ```
-以上代码可以看出，Header 向上偏移的一个 Header 的高度 `mHeaderHeight`，这样初始情况下， Header隐藏。  
-代码中有个 `offsetX` 变量，初始时为0，随着下拉的过程， `offsetX` 会逐渐增大，这样 Header 和 Content 都会向下移动，出现下拉的位置移动效果。 
+以上代码可以看出，计算 Header top值的时候，向上偏移的一个 Header 的高度 （`mHeaderHeight`），这样初始情况下， Header 就会被隐藏。  
+代码中有个 `offsetX` 变量（我认为改为 `offsetY` 好些），初始时为0，随着下拉的过程， `offsetX` 会逐渐增大，这样 Header 和 Content 都会向下移动， Header 会显示出来，出现下拉的位置移动效果。 
 
 **（2）行为（ View 事件）**  
 参考技术点，[公共技术点之 View 事件传递](http://codekk.com/open-source-project-analysis/detail/Android/Trinea/%E5%85%AC%E5%85%B1%E6%8A%80%E6%9C%AF%E7%82%B9%E4%B9%8BView%20%E4%BA%8B%E4%BB%B6%E4%BC%A0%E9%80%92)  
@@ -428,6 +315,10 @@ public void onUIPositionChange(PtrFrameLayout frame, boolean isUnderTouch, byte 
 继承PtrFrameLayout.java，经典下拉刷新实现类。  
 添加了 PtrClassicDefaultHeader 作为头部，用户使用时只需要设置 Content 即可。
 ####4.1.8 PtrUIHandlerHook.java
+钩子任务类，实现了 Runnable 接口，可以理解为在原来的操作之间，插入了一段任务去执行。  
+一个钩子任务只能执行一次，通过调用 `takeOver` 去执行。执行结束，用户需要调用 `resume` 方法，去恢复执行原来的操作。  
+如果钩子任务已经执行过了，调用 `takeOver` 将会直接恢复执行原来的操作。  
+可以通过 PtrFrameLayout 类的 `setRefreshCompleteHook(PtrUIHandlerHook hook)` 进行设置。当用户调用 `refreshComplete()` 方法表示刷新结束以后，如果有 hook 存在，先执行 hook 的 `takeOver` 方法，执行结束，用户需要主动调用 hook 的 `resume` 方法，然后又才会进行头部回弹到顶部的动作。
 ####4.1.9 MaterialHeader.java
 Material Design风格的头部实现  
 ![material-design-header](image/material-design-header.gif)
