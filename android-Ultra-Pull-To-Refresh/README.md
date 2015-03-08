@@ -318,7 +318,7 @@ public void onUIPositionChange(PtrFrameLayout frame, boolean isUnderTouch, byte 
 钩子任务类，实现了 Runnable 接口，可以理解为在原来的操作之间，插入了一段任务去执行。  
 一个钩子任务只能执行一次，通过调用 `takeOver` 去执行。执行结束，用户需要调用 `resume` 方法，去恢复执行原来的操作。  
 如果钩子任务已经执行过了，调用 `takeOver` 将会直接恢复执行原来的操作。  
-可以通过 PtrFrameLayout 类的 `setRefreshCompleteHook(PtrUIHandlerHook hook)` 进行设置。当用户调用 `refreshComplete()` 方法表示刷新结束以后，如果有 hook 存在，先执行 hook 的 `takeOver` 方法，执行结束，用户需要主动调用 hook 的 `resume` 方法，然后又才会进行头部回弹到顶部的动作。
+可以通过 PtrFrameLayout 类的 `setRefreshCompleteHook(PtrUIHandlerHook hook)` 进行设置。当用户调用 `refreshComplete()` 方法表示刷新结束以后，如果有 hook 存在，先执行 hook 的 `takeOver` 方法，执行结束，用户需要主动调用 hook 的 `resume` 方法，然后又才会进行 Header 回弹到顶部的动作。
 ####4.1.9 MaterialHeader.java
 Material Design风格的头部实现  
 ![material-design-header](image/material-design-header.gif)
