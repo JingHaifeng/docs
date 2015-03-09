@@ -208,8 +208,17 @@ final int top = paddingTop + lp.topMargin + offsetX;
 
 **（2）行为（ View 事件）**  
 参考技术点，[公共技术点之 View 事件传递](http://codekk.com/open-source-project-analysis/detail/Android/Trinea/%E5%85%AC%E5%85%B1%E6%8A%80%E6%9C%AF%E7%82%B9%E4%B9%8BView%20%E4%BA%8B%E4%BB%B6%E4%BC%A0%E9%80%92)  
-ViewGroup 的事件处理，通常重写 onInterceptTouchEvent 方法或者 dispatchTouchEvent 方法，PtrFrameLayout 重写了 dispatchTouchEvent 方法。
- 
+ViewGroup 的事件处理，通常重写 onInterceptTouchEvent 方法或者 dispatchTouchEvent 方法，PtrFrameLayout 重写了 dispatchTouchEvent 方法。  
+**事件处理流程图** 如下：  
+![UltraPTR-dispatchTouchEvent-flow-chart](image/UltraPTR-dispatchTouchEvent-flow-chart.png)  
+以上有两点需要分析下  
+> 1. ACTION_UP 或者 ACTION_CANCEL 时候执行的 onRelease 方法。  
+> **功能上**，通过执行 `tryToPerformRefresh` 方法，如果向下拉动的位移已经超过了触发下拉刷新的偏移量 `mOffsetToRefresh` ，并且当前状态是 PTR_STATUS_PREPARE ，执行刷新功能回调。  
+> **行为上**，如果没有达到触发刷新的偏移量，或者当前状态为 PTR_STATUS_COMPLETE ，或者刷新过程中不保持头部位置，则执行向上的位置回复动作。
+> 2. ACTION_MOVE 中判断是否可以纵向 move 。
+> ACTION_MOVE 的方向**向下**，如果 `mPtrHandler` 不为空，并且 `mPtrHandler.checkCanDoRefresh` 返回值为 true，则可以移动， Header 和 Content 向下移动，否则，事件交由父类处理。  
+> 如果 ACTION_MOVE 的方向**向上**，如果当前位置大于其实位置，则可以移动，Header 和 Content 向上移动，否则，事件交由父类处理。
+
 ####4.1.6 PtrClassicDefaultHeader.java
 经典下拉刷新的头部实现  
 ![default-header](image/default-header.gif)  
