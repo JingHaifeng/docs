@@ -215,9 +215,9 @@ ViewGroup 的事件处理，通常重写 onInterceptTouchEvent 方法或者 disp
 > 1. ACTION_UP 或者 ACTION_CANCEL 时候执行的 onRelease 方法。  
 > **功能上**，通过执行 `tryToPerformRefresh` 方法，如果向下拉动的位移已经超过了触发下拉刷新的偏移量 `mOffsetToRefresh` ，并且当前状态是 PTR_STATUS_PREPARE ，执行刷新功能回调。  
 > **行为上**，如果没有达到触发刷新的偏移量，或者当前状态为 PTR_STATUS_COMPLETE ，或者刷新过程中不保持头部位置，则执行向上的位置回复动作。
-> 2. ACTION_MOVE 中判断是否可以纵向 move 。
+> 2. ACTION_MOVE 中判断是否可以纵向 move 。  
 > ACTION_MOVE 的方向**向下**，如果 `mPtrHandler` 不为空，并且 `mPtrHandler.checkCanDoRefresh` 返回值为 true，则可以移动， Header 和 Content 向下移动，否则，事件交由父类处理。  
-> 如果 ACTION_MOVE 的方向**向上**，如果当前位置大于其实位置，则可以移动，Header 和 Content 向上移动，否则，事件交由父类处理。
+> ACTION_MOVE 的方向**向上**，如果当前位置大于起始位置，则可以移动，Header 和 Content 向上移动，否则，事件交由父类处理。
 
 ####4.1.6 PtrClassicDefaultHeader.java
 经典下拉刷新的头部实现  
